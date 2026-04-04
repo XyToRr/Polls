@@ -1,0 +1,6 @@
+﻿CREATE PROCEDURE [dbo].[DeletePoll]
+    @Id UNIQUEIDENTIFIER
+AS
+BEGIN
+    DELETE FROM Polls WHERE Id = @Id
+END

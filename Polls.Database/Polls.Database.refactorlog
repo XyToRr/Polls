@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Operations Version="1.0" xmlns="http://schemas.microsoft.com/sqlserver/dac/Serialization/2012/02">
+  <Operation Name="Rename Refactor" Key="170df2fb-8f74-4a5c-90ef-ee285f0a3272" ChangeDateTime="04/04/2026 10:41:48">
+    <Property Name="ElementName" Value="[dbo].[Votes].[Poll]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[Votes]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="VariantId" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="b71368b8-7cf0-4aff-a276-132a5b303cc4" ChangeDateTime="04/04/2026 11:24:38">
+    <Property Name="ElementName" Value="[dbo].[Polls].[AlgorithmId]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[Polls]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="Algorithm" />
+  </Operation>
+</Operations>

@@ -1,0 +1,9 @@
+﻿CREATE TABLE [dbo].[Variants]
+(
+    [Id]     UNIQUEIDENTIFIER NOT NULL,
+    [PollId] UNIQUEIDENTIFIER NOT NULL,
+    [Text]   NVARCHAR(50)     NOT NULL,
+
+    CONSTRAINT [PK_Variants]      PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Variants_Poll] FOREIGN KEY ([PollId]) REFERENCES [Polls]([Id]) ON DELETE CASCADE
+)

@@ -1,0 +1,12 @@
+﻿CREATE TABLE [dbo].[Votes]
+(
+    [Id]        UNIQUEIDENTIFIER NOT NULL,
+    [PollId]    UNIQUEIDENTIFIER NOT NULL,
+    [UserId]    UNIQUEIDENTIFIER NULL,
+    [CreatedAt] DATETIME         NOT NULL DEFAULT GETDATE(),
+    [IsValid]   BIT              NOT NULL DEFAULT 1,
+
+    CONSTRAINT [PK_Votes]      PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Votes_Poll] FOREIGN KEY ([PollId]) REFERENCES [Polls]([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_Votes_User] FOREIGN KEY ([UserId]) REFERENCES [Users]([Id]) ON DELETE NO ACTION
+)
