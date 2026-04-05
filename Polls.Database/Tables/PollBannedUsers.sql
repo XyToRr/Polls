@@ -11,3 +11,30 @@
     CONSTRAINT [FK_PollBannedUsers_User]     FOREIGN KEY ([UserId])        REFERENCES [Users]([Id]) ON DELETE NO ACTION,
     CONSTRAINT [FK_PollBannedUsers_BannedBy] FOREIGN KEY ([BannedByUserId]) REFERENCES [Users]([Id]) ON DELETE NO ACTION
 )
+
+GO
+
+CREATE TRIGGER [dbo].[TR_PollBannedUsers_InvalidateVotes]
+ON [dbo].[PollBannedUsers]
+AFTER INSERT
+AS
+BEGIN
+    UPDATE Votes
+    SET IsValid = 0
+    WHERE UserId IN (SELECT UserId FROM inserted)
+      AND PollId IN (SELECT PollId FROM inserted)
+END
+
+
+GO
+
+CREATE TRIGGER [dbo].[TR_PollBannedUsers_RestoreVotes]
+ON [dbo].[PollBannedUsers]
+AFTER DELETE
+AS
+BEGIN
+    UPDATE Votes
+    SET IsValid = 1
+    WHERE UserId IN (SELECT UserId FROM deleted)
+      AND PollId IN (SELECT PollId FROM deleted)
+END

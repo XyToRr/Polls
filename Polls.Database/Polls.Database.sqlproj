@@ -60,6 +60,9 @@
     <Folder Include="StoredProcedures" />
     <Folder Include="StoredProcedures\Users" />
     <Folder Include="StoredProcedures\Polls" />
+    <Folder Include="StoredProcedures\Votes" />
+    <Folder Include="StoredProcedures\Types" />
+    <Folder Include="Triggers" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Tables\Users.sql" />
@@ -79,6 +82,14 @@
     <Build Include="StoredProcedures\Polls\GetActivePolls.sql" />
     <Build Include="StoredProcedures\Polls\ClosePoll.sql" />
     <Build Include="StoredProcedures\Polls\DeletePoll.sql" />
+    <Build Include="StoredProcedures\Votes\CreateVote.sql" />
+    <Build Include="StoredProcedures\Polls\CreatePollWithVariants.sql" />
+    <Build Include="StoredProcedures\Types\VariantList.sql" />
+    <Build Include="StoredProcedures\Types\VoteSelectionList.sql" />
+    <Build Include="StoredProcedures\Users\BanUser.sql" />
+    <Build Include="StoredProcedures\Users\UnbanUser.sql" />
+    <Build Include="StoredProcedures\Users\FollowUser.sql" />
+    <Build Include="StoredProcedures\Users\UnfollowUser.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="Polls.Database.refactorlog" />

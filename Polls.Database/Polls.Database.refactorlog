@@ -14,4 +14,11 @@
     <Property Name="ParentElementType" Value="SqlTable" />
     <Property Name="NewName" Value="Algorithm" />
   </Operation>
+  <Operation Name="Rename Refactor" Key="6cced32e-60de-4f29-99e7-877108310509" ChangeDateTime="04/05/2026 10:56:00">
+    <Property Name="ElementName" Value="[dbo].[TR_PollBannedUsers]" />
+    <Property Name="ElementType" Value="SqlDmlTrigger" />
+    <Property Name="ParentElementName" Value="[dbo].[PollBannedUsers]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[TR_PollBannedUsers_InvalidateVotes]" />
+  </Operation>
 </Operations>

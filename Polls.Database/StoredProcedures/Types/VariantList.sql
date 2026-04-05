@@ -1,0 +1,5 @@
+﻿CREATE TYPE [dbo].[VariantList] AS TABLE
+(
+    [Id]   UNIQUEIDENTIFIER NOT NULL,
+    [Text] NVARCHAR(50)     NOT NULL
+)
