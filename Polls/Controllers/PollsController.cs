@@ -1,0 +1,101 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Polls.Business.Interfaces;
+using Polls.Dtos;
+using System.Security.Claims;
+
+namespace Polls.Controllers;
+
+/// <summary>
+/// Controller for managing polls.
+/// </summary>
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class PollsController : ControllerBase
+{
+    private readonly IPollService _pollService;
+    private readonly ILogger<PollsController> _logger;
+
+    public PollsController(IPollService pollService, ILogger<PollsController> logger)
+    {
+        _pollService = pollService ?? throw new ArgumentNullException(nameof(pollService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <summary>
+    /// Creates a new poll with variants.
+    /// </summary>
+    /// <param name="dto">Poll creation data</param>
+    /// <returns>Created poll with 201 status code</returns>
+    /// <response code="201">Poll created successfully</response>
+    /// <response code="400">Invalid poll data</response>
+    /// <response code="401">User is not authenticated</response>
+    /// <response code="500">Internal server error</response>
+    [HttpPost("create-with-variants")]
+    public async Task<ActionResult> CreatePollWithVariants([FromBody] CreatePollWithVariantsDto dto)
+    {
+        if (dto == null)
+            return BadRequest("Poll data is required");
+
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        try
+        {
+            // Get the user ID from JWT claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                _logger.LogWarning("Failed to extract user ID from JWT token");
+                return Unauthorized("Invalid user context");
+            }
+
+            var poll = await _pollService.CreatePollWithVariantsAsync(dto, userId);
+
+            return CreatedAtAction(nameof(GetPoll), new { id = poll.Id }, poll);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Validation error creating poll");
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, "Operation error creating poll");
+            return StatusCode(500, new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error creating poll");
+            return StatusCode(500, new { error = "An unexpected error occurred" });
+        }
+    }
+
+    /// <summary>
+    /// Retrieves a poll by its ID.
+    /// </summary>
+    /// <param name="id">Poll ID</param>
+    /// <returns>Poll data if found</returns>
+    /// <response code="200">Poll retrieved successfully</response>
+    /// <response code="404">Poll not found</response>
+    /// <response code="401">User is not authenticated</response>
+    [HttpGet("{id}")]
+    public async Task<ActionResult> GetPoll(Guid id)
+    {
+        try
+        {
+            var poll = await _pollService.GetPollByIdAsync(id);
+
+            if (poll == null)
+                return NotFound(new { error = "Poll not found" });
+
+            return Ok(poll);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving poll {PollId}", id);
+            return StatusCode(500, new { error = "An error occurred while retrieving the poll" });
+        }
+    }
+}

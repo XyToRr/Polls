@@ -1,4 +1,4 @@
-namespace Polls.Dtos.Auth;
+namespace Polls.Dtos.User;
 
 /// <summary>
 /// DTO for user registration with only necessary fields.

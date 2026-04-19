@@ -1,4 +1,4 @@
-namespace Polls.Dtos.Auth;
+namespace Polls.Dtos.User;
 
 /// <summary>
 /// DTO for authentication response with JWT token only.

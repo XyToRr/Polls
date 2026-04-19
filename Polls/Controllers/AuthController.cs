@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Polls.Business.Interfaces;
-using Polls.Dtos.Auth;
+using Polls.Dtos.User;
 
 namespace Polls.Controllers;
 
@@ -56,7 +56,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginUserDto dto)
     {
         try
-        {
+        {           
             var token = await _authService.LoginAsync(dto);
             return Ok(new AuthResponseDto { Token = token });
         }

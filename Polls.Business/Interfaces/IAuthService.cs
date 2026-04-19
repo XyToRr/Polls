@@ -1,4 +1,4 @@
-using Polls.Dtos.Auth;
+using Polls.Dtos.User;
 
 namespace Polls.Business.Interfaces;
 

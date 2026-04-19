@@ -1,6 +1,6 @@
 using Polls.Business.Interfaces;
 using Polls.Core.Models.Users;
-using Polls.Dtos.Auth;
+using Polls.Dtos.User;
 
 namespace Polls.Business.Implementations;
 
