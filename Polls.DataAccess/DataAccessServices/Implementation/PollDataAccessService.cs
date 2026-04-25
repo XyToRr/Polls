@@ -205,7 +205,7 @@ public class PollDataAccessService : DataAccessService<Poll>
         {
             var selectionsTable = new DataTable();
             selectionsTable.Columns.Add("VariantId", typeof(Guid));
-            selectionsTable.Columns.Add("Rank", typeof(object));
+            selectionsTable.Columns.Add("Rank", typeof(int));
 
             foreach (var (variantId, rank) in selections)
             {
@@ -227,4 +227,34 @@ public class PollDataAccessService : DataAccessService<Poll>
             throw new InvalidOperationException("Failed to create vote", ex);
         }
     }
+
+    /// <summary>
+    /// Retrieves variants for a given poll.
+    /// </summary>
+    /// <param name="pollId">Poll ID</param>
+    /// <returns>List of variants belonging to the poll</returns>
+    public async Task<List<Variant>> GetVariantsByPollIdAsync(Guid pollId)
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("@PollId", pollId);
+
+        try
+        {
+            using (var connection = CreateConnection())
+            {
+                connection.Open();
+                var rows = await connection.QueryAsync<Variant>(
+                    "dbo.GetVariantsByPollId",
+                    parameters,
+                    commandType: System.Data.CommandType.StoredProcedure);
+
+                return rows.ToList();
+            }
+        }
+        catch
+        {
+            return new List<Variant>();
+        }
+    }
 }
+

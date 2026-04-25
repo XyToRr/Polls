@@ -92,6 +92,13 @@ public class PollService : IPollService
         if (poll == null)
             throw new ArgumentException("Poll not found", nameof(dto.PollId));
 
+        // Ensure we have variants for validation. Some stored procedures may not return variants with the poll.
+        if (poll.Variants == null || poll.Variants.Count == 0)
+        {
+            var variants = await _pollDataAccessService.GetVariantsByPollIdAsync(dto.PollId);
+            poll.Variants = variants ?? new List<Variant>();
+        }
+
         // Check if poll is closed manually
         if (poll.ClosedManually == true)
             throw new ArgumentException("This poll is closed", nameof(dto.PollId));
