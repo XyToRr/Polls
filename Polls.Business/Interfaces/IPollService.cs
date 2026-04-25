@@ -22,4 +22,14 @@ public interface IPollService
     /// <param name="id">Poll ID</param>
     /// <returns>Poll if found, otherwise null</returns>
     Task<Poll?> GetPollByIdAsync(Guid id);
+
+    /// <summary>
+    /// Creates a vote on a poll with validation.
+    /// </summary>
+    /// <param name="dto">Vote creation data</param>
+    /// <param name="userId">ID of the user voting</param>
+    /// <returns>The created vote</returns>
+    /// <exception cref="ArgumentException">Thrown when validation fails</exception>
+    /// <exception cref="InvalidOperationException">Thrown when operation fails</exception>
+    Task<Vote> CreateVoteAsync(CreateVoteDto dto, Guid userId);
 }

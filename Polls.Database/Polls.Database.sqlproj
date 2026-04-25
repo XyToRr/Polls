@@ -90,7 +90,8 @@
     <Build Include="StoredProcedures\Users\UnbanUser.sql" />
     <Build Include="StoredProcedures\Users\FollowUser.sql" />
     <Build Include="StoredProcedures\Users\UnfollowUser.sql" />
-  </ItemGroup>
+    <Build Include="StoredProcedures\Votes\CheckUserHasVoted.sql" />
+    <Build Include="StoredProcedures\Votes\CheckUserIsBanned.sql" />
   <ItemGroup>
     <RefactorLog Include="Polls.Database.refactorlog" />
   </ItemGroup>

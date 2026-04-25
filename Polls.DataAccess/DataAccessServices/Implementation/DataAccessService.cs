@@ -53,6 +53,25 @@ public abstract class DataAccessService<T> : IDataAccessService<T> where T : cla
     }
 
     /// <summary>
+    /// Executes a stored procedure and returns a result of the specified type.
+    /// </summary>
+    /// <typeparam name="TResult">The type of result to return from the procedure</typeparam>
+    /// <param name="procedureName">Name of the stored procedure</param>
+    /// <param name="parameters">Dapper DynamicParameters to pass to the procedure</param>
+    /// <returns>Result from procedure</returns>
+    protected async Task<TResult?> ExecuteProcedureAsync<TResult>(string procedureName, DynamicParameters? parameters = null)
+    {
+        using (var connection = CreateConnection())
+        {
+            connection.Open();
+            return await connection.QueryFirstOrDefaultAsync<TResult>(
+                procedureName,
+                parameters,
+                commandType: CommandType.StoredProcedure);
+        }
+    }
+
+    /// <summary>
     /// Executes a stored procedure and returns multiple entity results.
     /// </summary>
     /// <param name="procedureName">Name of the stored procedure</param>

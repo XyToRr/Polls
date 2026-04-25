@@ -141,4 +141,90 @@ public class PollDataAccessService : DataAccessService<Poll>
         var rowsAffected = await ExecuteNonQueryProcedureAsync("dbo.DeletePoll", parameters);
         return rowsAffected > 0;
     }
+
+    /// <summary>
+    /// Checks if a user is banned from voting on a specific poll.
+    /// </summary>
+    /// <param name="pollId">Poll ID</param>
+    /// <param name="userId">User ID</param>
+    /// <returns>True if user is banned, false otherwise</returns>
+    public async Task<bool> IsUserBannedAsync(Guid pollId, Guid userId)
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("@PollId", pollId);
+        parameters.Add("@UserId", userId);
+
+        try
+        {
+            var result = await ExecuteProcedureAsync<bool?>("dbo.CheckUserIsBanned", parameters);
+            return result ?? false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Checks if a user has already voted on a specific poll.
+    /// </summary>
+    /// <param name="pollId">Poll ID</param>
+    /// <param name="userId">User ID</param>
+    /// <returns>True if user has already voted, false otherwise</returns>
+    public async Task<bool> HasUserVotedAsync(Guid pollId, Guid userId)
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("@PollId", pollId);
+        parameters.Add("@UserId", userId);
+
+        try
+        {
+            var result = await ExecuteProcedureAsync<bool?>("dbo.CheckUserHasVoted", parameters);
+            return result ?? false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Creates a vote using the CreateVote stored procedure.
+    /// </summary>
+    /// <param name="voteId">Vote ID (new GUID)</param>
+    /// <param name="pollId">Poll ID</param>
+    /// <param name="userId">User ID</param>
+    /// <param name="selections">List of variant selections with optional ranking</param>
+    /// <returns>True if successful, false otherwise</returns>
+    public async Task<bool> CreateVoteAsync(Guid voteId, Guid pollId, Guid userId, List<(Guid VariantId, int? Rank)> selections)
+    {
+        if (selections == null || selections.Count == 0)
+            throw new ArgumentException("At least one variant selection is required", nameof(selections));
+
+        try
+        {
+            var selectionsTable = new DataTable();
+            selectionsTable.Columns.Add("VariantId", typeof(Guid));
+            selectionsTable.Columns.Add("Rank", typeof(object));
+
+            foreach (var (variantId, rank) in selections)
+            {
+                selectionsTable.Rows.Add(variantId, (object?)rank ?? DBNull.Value);
+            }
+
+            var parameters = new DynamicParameters();
+            parameters.Add("@Id", voteId);
+            parameters.Add("@PollId", pollId);
+            parameters.Add("@UserId", userId);
+            parameters.Add("@CreatedAt", DateTime.UtcNow);
+            parameters.Add("@Selections", selectionsTable.AsTableValuedParameter("dbo.VoteSelectionList"));
+
+            var result = await ExecuteNonQueryProcedureAsync("dbo.CreateVote", parameters);
+            return result >= 0;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to create vote", ex);
+        }
+    }
 }

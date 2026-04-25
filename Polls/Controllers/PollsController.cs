@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Polls.Business.Interfaces;
+using Polls.Core.Models;
 using Polls.Dtos;
 using System.Security.Claims;
 
@@ -96,6 +97,55 @@ public class PollsController : ControllerBase
         {
             _logger.LogError(ex, "Error retrieving poll {PollId}", id);
             return StatusCode(500, new { error = "An error occurred while retrieving the poll" });
+        }
+    }
+
+    /// <summary>
+    /// Adds a vote to a poll.
+    /// </summary>
+    /// <param name="dto">Vote creation data</param>
+    /// <returns>Created vote with 201 status code</returns>
+    /// <response code="201">Vote created successfully</response>
+    /// <response code="400">Invalid vote data or poll validation failed</response>
+    /// <response code="401">User is not authenticated</response>
+    /// <response code="500">Internal server error</response>
+    [HttpPost("vote")]
+    public async Task<ActionResult> AddVote([FromBody] CreateVoteDto dto)
+    {
+        if (dto == null)
+            return BadRequest("Vote data is required");
+
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        try
+        {
+            // Get the user ID from JWT claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                _logger.LogWarning("Failed to extract user ID from JWT token");
+                return Unauthorized("Invalid user context");
+            }
+
+            var vote = await _pollService.CreateVoteAsync(dto, userId);
+
+            return CreatedAtAction(nameof(GetPoll), new { id = vote.PollId }, vote);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Validation error creating vote");
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, "Operation error creating vote");
+            return StatusCode(500, new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error creating vote");
+            return StatusCode(500, new { error = "An unexpected error occurred" });
         }
     }
 }

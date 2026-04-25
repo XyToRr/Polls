@@ -73,6 +73,141 @@ public class PollService : IPollService
     }
 
     /// <summary>
+    /// Creates a vote on a poll with validation.
+    /// </summary>
+    /// <param name="dto">Vote creation data</param>
+    /// <param name="userId">ID of the user voting</param>
+    /// <returns>The created vote</returns>
+    /// <exception cref="ArgumentException">Thrown when validation fails</exception>
+    /// <exception cref="InvalidOperationException">Thrown when operation fails</exception>
+    public async Task<Vote> CreateVoteAsync(CreateVoteDto dto, Guid userId)
+    {
+        if (dto == null)
+            throw new ArgumentNullException(nameof(dto));
+
+        ValidateCreateVoteRequest(dto);
+
+        // Get the poll
+        var poll = await GetPollByIdAsync(dto.PollId);
+        if (poll == null)
+            throw new ArgumentException("Poll not found", nameof(dto.PollId));
+
+        // Check if poll is closed manually
+        if (poll.ClosedManually == true)
+            throw new ArgumentException("This poll is closed", nameof(dto.PollId));
+
+        // Check if poll is within the open period
+        var now = DateTime.UtcNow;
+        if (now < poll.StartDate)
+            throw new ArgumentException("This poll has not started yet", nameof(dto.PollId));
+
+        if (poll.EndDate.HasValue && now > poll.EndDate)
+            throw new ArgumentException("This poll has ended", nameof(dto.PollId));
+
+        // Check if user is banned
+        if (await _pollDataAccessService.IsUserBannedAsync(dto.PollId, userId))
+            throw new ArgumentException("You are banned from voting on this poll", nameof(dto.PollId));
+
+        // Check if user has already voted
+        if (await _pollDataAccessService.HasUserVotedAsync(dto.PollId, userId))
+            throw new ArgumentException("You have already voted on this poll", nameof(dto.PollId));
+
+        // Validate selected variants belong to this poll
+        var selectedVariantIds = dto.SelectedVariants.Select(v => v.VariantId).ToHashSet();
+        var pollVariantIds = poll.Variants.Select(v => v.Id).ToHashSet();
+
+        foreach (var variantId in selectedVariantIds)
+        {
+            if (!pollVariantIds.Contains(variantId))
+                throw new ArgumentException("One or more selected variants do not belong to this poll", nameof(dto.SelectedVariants));
+        }
+
+        // Validate based on algorithm
+        ValidateVoteByAlgorithm(dto, poll.Algorithm);
+
+        // Create the vote
+        var voteId = Guid.NewGuid();
+        var selections = dto.SelectedVariants
+            .Select(v => (v.VariantId, v.Rank))
+            .ToList();
+
+        var success = await _pollDataAccessService.CreateVoteAsync(voteId, dto.PollId, userId, selections);
+
+        if (!success)
+            throw new InvalidOperationException("Failed to create vote in the database");
+
+        return new Vote
+        {
+            Id = voteId,
+            PollId = dto.PollId,
+            UserId = userId,
+            CreatedAt = DateTime.UtcNow,
+            IsValid = true
+        };
+    }
+
+    /// <summary>
+    /// Validates the create vote request data.
+    /// </summary>
+    /// <param name="dto">Vote creation DTO</param>
+    /// <exception cref="ArgumentException">Thrown when validation fails</exception>
+    private static void ValidateCreateVoteRequest(CreateVoteDto dto)
+    {
+        if (dto.PollId == Guid.Empty)
+            throw new ArgumentException("Poll ID is required", nameof(dto.PollId));
+
+        if (dto.SelectedVariants == null || dto.SelectedVariants.Count == 0)
+            throw new ArgumentException("At least one variant must be selected", nameof(dto.SelectedVariants));
+    }
+
+    /// <summary>
+    /// Validates the vote based on the poll's algorithm.
+    /// </summary>
+    /// <param name="dto">Vote creation DTO</param>
+    /// <param name="algorithm">Poll algorithm type</param>
+    /// <exception cref="ArgumentException">Thrown when validation fails</exception>
+    private static void ValidateVoteByAlgorithm(CreateVoteDto dto, PollWinnerDecidingAlgorithm algorithm)
+    {
+        switch (algorithm)
+        {
+            case PollWinnerDecidingAlgorithm.MostVotes:
+                // Only one selection allowed
+                if (dto.SelectedVariants.Count != 1)
+                    throw new ArgumentException("This poll only allows selecting one variant", nameof(dto.SelectedVariants));
+                break;
+
+            case PollWinnerDecidingAlgorithm.RatingScale:
+                // Multiple selections allowed, Rank field ignored
+                // No additional validation needed
+                break;
+
+            case PollWinnerDecidingAlgorithm.Ranking:
+                // Multiple selections with ranking required
+                // All selections must have unique, valid ranks
+                var ranks = dto.SelectedVariants
+                    .Where(v => v.Rank.HasValue)
+                    .Select(v => v.Rank.Value)
+                    .ToList();
+
+                if (ranks.Count != dto.SelectedVariants.Count)
+                    throw new ArgumentException("Ranked voting requires all variants to have a rank value", nameof(dto.SelectedVariants));
+
+                // Check for duplicate ranks
+                if (ranks.Distinct().Count() != ranks.Count)
+                    throw new ArgumentException("All variant ranks must be unique", nameof(dto.SelectedVariants));
+
+                // Check that ranks start from 1 and are consecutive
+                var sortedRanks = ranks.OrderBy(r => r).ToList();
+                for (int i = 0; i < sortedRanks.Count; i++)
+                {
+                    if (sortedRanks[i] != i + 1)
+                        throw new ArgumentException("Ranks must be consecutive starting from 1", nameof(dto.SelectedVariants));
+                }
+                break;
+        }
+    }
+
+    /// <summary>
     /// Validates the create poll request data.
     /// </summary>
     /// <param name="dto">Poll creation DTO</param>
