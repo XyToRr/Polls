@@ -32,4 +32,21 @@ public interface IPollService
     /// <exception cref="ArgumentException">Thrown when validation fails</exception>
     /// <exception cref="InvalidOperationException">Thrown when operation fails</exception>
     Task<Vote> CreateVoteAsync(CreateVoteDto dto, Guid userId);
+
+    /// <summary>
+    /// Gets all poll results sorted from best to worst performance.
+    /// </summary>
+    /// <param name="pollId">Poll ID</param>
+    /// <returns>Poll results DTO with all variants sorted</returns>
+    /// <exception cref="ArgumentException">Thrown when poll not found</exception>
+    Task<PollResultsDto> GetPollResultsAsync(Guid pollId);
+
+    /// <summary>
+    /// Gets only the winner of a poll.
+    /// </summary>
+    /// <param name="pollId">Poll ID</param>
+    /// <returns>Winning variant result</returns>
+    /// <exception cref="ArgumentException">Thrown when poll not found</exception>
+    /// <exception cref="InvalidOperationException">Thrown when poll has no votes</exception>
+    Task<VariantResultDto> GetPollWinnerAsync(Guid pollId);
 }

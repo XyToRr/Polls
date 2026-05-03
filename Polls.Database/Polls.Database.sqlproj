@@ -94,6 +94,7 @@
     <Build Include="StoredProcedures\Votes\CheckUserHasVoted.sql" />
     <Build Include="StoredProcedures\Votes\CheckUserIsBanned.sql" />
     <Build Include="StoredProcedures\Variants\GetVariantsByPollId.sql" />
+    <Build Include="StoredProcedures\Polls\GetPollResults.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="Polls.Database.refactorlog" />

@@ -1,4 +1,5 @@
 using Polls.Business.Interfaces;
+using Polls.Business.Strategies;
 using Polls.Core.Models;
 using Polls.DataAccess.DataAccessServices.Implementation;
 using Polls.Dtos;
@@ -250,5 +251,75 @@ public class PollService : IPollService
             if (variant.Text.Length > 50)
                 throw new ArgumentException("Variant text cannot exceed 50 characters", nameof(variant.Text));
         }
+    }
+
+    /// <summary>
+    /// Gets all poll results sorted from best to worst performance.
+    /// </summary>
+    public async Task<PollResultsDto> GetPollResultsAsync(Guid pollId)
+    {
+        var poll = await GetPollByIdAsync(pollId);
+        if (poll == null)
+            throw new ArgumentException("Poll not found", nameof(pollId));
+
+        var selections = await _pollDataAccessService.GetPollResultsAsync(pollId);
+
+        var strategy = GetWinnerStrategy(poll.Algorithm);
+        var sortedResults = strategy.GetSortedResults(selections);
+
+        return new PollResultsDto
+        {
+            PollId = pollId,
+            Title = poll.Title,
+            Results = sortedResults
+                .Select(r => new VariantResultDto
+                {
+                    VariantId = r.VariantId,
+                    VariantText = r.VariantText,
+                    Score = r.Score
+                })
+                .ToList()
+        };
+    }
+
+    /// <summary>
+    /// Gets only the winner of a poll.
+    /// </summary>
+    public async Task<VariantResultDto> GetPollWinnerAsync(Guid pollId)
+    {
+        var poll = await GetPollByIdAsync(pollId);
+        if (poll == null)
+            throw new ArgumentException("Poll not found", nameof(pollId));
+
+        var selections = await _pollDataAccessService.GetPollResultsAsync(pollId);
+        if (selections.Count == 0)
+            throw new InvalidOperationException("Poll has no votes");
+
+        var strategy = GetWinnerStrategy(poll.Algorithm);
+        var winner = strategy.DetermineWinner(selections);
+
+        if (winner == null)
+            throw new InvalidOperationException("Unable to determine winner");
+
+        return new VariantResultDto
+        {
+            VariantId = winner.VariantId,
+            VariantText = winner.VariantText,
+            Score = winner.Score
+        };
+    }
+
+    /// <summary>
+    /// Gets the appropriate strategy for winner determination based on poll algorithm.
+    /// </summary>
+    private static IWinnerStrategy GetWinnerStrategy(PollWinnerDecidingAlgorithm algorithm)
+    {
+        return algorithm switch
+        {
+            PollWinnerDecidingAlgorithm.MostVotes => new MostVotesStrategy(),
+            PollWinnerDecidingAlgorithm.RatingScale => new RatingScaleStrategy(),
+            PollWinnerDecidingAlgorithm.Ranking => new RankingStrategy(),
+            _ => throw new InvalidOperationException($"Unknown algorithm: {algorithm}")
+        };
     }
 }

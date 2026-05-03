@@ -148,4 +148,74 @@ public class PollsController : ControllerBase
             return StatusCode(500, new { error = "An unexpected error occurred" });
         }
     }
+
+    /// <summary>
+    /// Retrieves poll results with all variants sorted from best to worst.
+    /// </summary>
+    /// <param name="id">Poll ID</param>
+    /// <returns>Poll results with sorted variants</returns>
+    /// <response code="200">Results retrieved successfully</response>
+    /// <response code="404">Poll not found</response>
+    /// <response code="400">Poll has no votes</response>
+    /// <response code="401">User is not authenticated</response>
+    /// <response code="500">Internal server error</response>
+    [HttpGet("{id}/results")]
+    public async Task<ActionResult> GetPollResults(Guid id)
+    {
+        try
+        {
+            var results = await _pollService.GetPollResultsAsync(id);
+            return Ok(results);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Poll not found {PollId}", id);
+            return NotFound(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Operation error retrieving results for {PollId}", id);
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving results for {PollId}", id);
+            return StatusCode(500, new { error = "An error occurred while retrieving poll results" });
+        }
+    }
+
+    /// <summary>
+    /// Retrieves only the winner of a poll.
+    /// </summary>
+    /// <param name="id">Poll ID</param>
+    /// <returns>Winning variant</returns>
+    /// <response code="200">Winner retrieved successfully</response>
+    /// <response code="404">Poll not found</response>
+    /// <response code="400">Poll has no votes</response>
+    /// <response code="401">User is not authenticated</response>
+    /// <response code="500">Internal server error</response>
+    [HttpGet("{id}/winner")]
+    public async Task<ActionResult> GetPollWinner(Guid id)
+    {
+        try
+        {
+            var winner = await _pollService.GetPollWinnerAsync(id);
+            return Ok(winner);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Poll not found {PollId}", id);
+            return NotFound(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Operation error retrieving winner for {PollId}", id);
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving winner for {PollId}", id);
+            return StatusCode(500, new { error = "An error occurred while retrieving poll winner" });
+        }
+    }
 }

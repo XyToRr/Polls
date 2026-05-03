@@ -256,5 +256,33 @@ public class PollDataAccessService : DataAccessService<Poll>
             return new List<Variant>();
         }
     }
-}
 
+    /// <summary>
+    /// Retrieves poll results using the GetPollResults stored procedure.
+    /// </summary>
+    /// <param name="pollId">Poll ID</param>
+    /// <returns>List of selection results (variant id, text, vote id, rank)</returns>
+    public async Task<List<SelectionResult>> GetPollResultsAsync(Guid pollId)
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("@PollId", pollId);
+
+        try
+        {
+            using (var connection = CreateConnection())
+            {
+                connection.Open();
+                var rows = await connection.QueryAsync<SelectionResult>(
+                    "dbo.GetPollResults",
+                    parameters,
+                    commandType: System.Data.CommandType.StoredProcedure);
+
+                return rows.ToList();
+            }
+        }
+        catch
+        {
+            return new List<SelectionResult>();
+        }
+    }
+}
