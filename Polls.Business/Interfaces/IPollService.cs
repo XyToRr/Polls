@@ -49,4 +49,26 @@ public interface IPollService
     /// <exception cref="ArgumentException">Thrown when poll not found</exception>
     /// <exception cref="InvalidOperationException">Thrown when poll has no votes</exception>
     Task<VariantResultDto> GetPollWinnerAsync(Guid pollId);
+
+    /// <summary>
+    /// Bans a user from a poll.
+    /// </summary>
+    /// <param name="pollId">ID of the poll</param>
+    /// <param name="ownerUserId">ID of the poll owner (must be the current user)</param>
+    /// <param name="targetUserId">ID of the user to ban</param>
+    /// <returns>True if ban was successful, false if user already banned or not found</returns>
+    /// <exception cref="ArgumentException">Thrown when poll not found or validation fails</exception>
+    /// <exception cref="UnauthorizedAccessException">Thrown when user is not the poll owner</exception>
+    Task<bool> BanUserAsync(Guid pollId, Guid ownerUserId, Guid targetUserId);
+
+    /// <summary>
+    /// Unbans a user from a poll.
+    /// </summary>
+    /// <param name="pollId">ID of the poll</param>
+    /// <param name="ownerUserId">ID of the poll owner (must be the current user)</param>
+    /// <param name="targetUserId">ID of the user to unban</param>
+    /// <returns>True if unban was successful, false if user not banned</returns>
+    /// <exception cref="ArgumentException">Thrown when poll not found or validation fails</exception>
+    /// <exception cref="UnauthorizedAccessException">Thrown when user is not the poll owner</exception>
+    Task<bool> UnbanUserAsync(Guid pollId, Guid ownerUserId, Guid targetUserId);
 }

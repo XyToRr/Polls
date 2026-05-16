@@ -218,4 +218,98 @@ public class PollsController : ControllerBase
             return StatusCode(500, new { error = "An error occurred while retrieving poll winner" });
         }
     }
+
+    /// <summary>
+    /// Bans a user from voting in a poll.
+    /// </summary>
+    /// <param name="pollId">ID of the poll</param>
+    /// <param name="userId">ID of the user to ban</param>
+    /// <returns>200 OK if successful, 400 if already banned, 403 if not poll owner, 404 if not found</returns>
+    [HttpPost("{pollId}/ban-user/{userId}")]
+    public async Task<IActionResult> BanUser(Guid pollId, Guid userId)
+    {
+        var ownerUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (ownerUserIdClaim == null || !Guid.TryParse(ownerUserIdClaim.Value, out var ownerUserId))
+        {
+            return Unauthorized();
+        }
+
+        if (pollId == Guid.Empty || userId == Guid.Empty)
+        {
+            return BadRequest("Poll ID and User ID cannot be empty");
+        }
+
+        try
+        {
+            var result = await _pollService.BanUserAsync(pollId, ownerUserId, userId);
+            if (!result)
+            {
+                return BadRequest("Cannot ban user. User may not exist or is already banned.");
+            }
+
+            return Ok();
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Ban user validation error for {PollId}", pollId);
+            return NotFound(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Unauthorized ban attempt for {PollId}", pollId);
+            return Forbid();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error banning user for {PollId}", pollId);
+            return StatusCode(500, new { error = "An error occurred while banning user" });
+        }
+    }
+
+    /// <summary>
+    /// Unbans a user from a poll.
+    /// </summary>
+    /// <param name="pollId">ID of the poll</param>
+    /// <param name="userId">ID of the user to unban</param>
+    /// <returns>200 OK if successful, 400 if not banned, 403 if not poll owner, 404 if not found</returns>
+    [HttpDelete("{pollId}/ban-user/{userId}")]
+    public async Task<IActionResult> UnbanUser(Guid pollId, Guid userId)
+    {
+        var ownerUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (ownerUserIdClaim == null || !Guid.TryParse(ownerUserIdClaim.Value, out var ownerUserId))
+        {
+            return Unauthorized();
+        }
+
+        if (pollId == Guid.Empty || userId == Guid.Empty)
+        {
+            return BadRequest("Poll ID and User ID cannot be empty");
+        }
+
+        try
+        {
+            var result = await _pollService.UnbanUserAsync(pollId, ownerUserId, userId);
+            if (!result)
+            {
+                return BadRequest("Cannot unban user. User may not be banned.");
+            }
+
+            return Ok();
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Unban user validation error for {PollId}", pollId);
+            return NotFound(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Unauthorized unban attempt for {PollId}", pollId);
+            return Forbid();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error unbanning user for {PollId}", pollId);
+            return StatusCode(500, new { error = "An error occurred while unbanning user" });
+        }
+    }
 }

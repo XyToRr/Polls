@@ -285,4 +285,50 @@ public class PollDataAccessService : DataAccessService<Poll>
             return new List<SelectionResult>();
         }
     }
+
+    public async Task<bool> BanUserAsync(Guid pollId, Guid targetUserId)
+    {
+        // Verify poll exists
+        var poll = await GetByIdAsync(pollId);
+        if (poll == null)
+            return false;
+
+        var parameters = new DynamicParameters();
+        parameters.Add("@PollId", pollId);
+        parameters.Add("@UserId", targetUserId);
+
+        try
+        {
+            var rowsAffected = await ExecuteNonQueryProcedureAsync("dbo.BanUser", parameters);
+            return rowsAffected > 0;
+        }
+        catch
+        {
+            // Return false if procedure fails (e.g., user already banned or user doesn't exist)
+            return false;
+        }
+    }
+
+    public async Task<bool> UnbanUserAsync(Guid pollId, Guid targetUserId)
+    {
+        // Verify poll exists
+        var poll = await GetByIdAsync(pollId);
+        if (poll == null)
+            return false;
+
+        var parameters = new DynamicParameters();
+        parameters.Add("@PollId", pollId);
+        parameters.Add("@UserId", targetUserId);
+
+        try
+        {
+            var rowsAffected = await ExecuteNonQueryProcedureAsync("dbo.UnbanUser", parameters);
+            return rowsAffected > 0;
+        }
+        catch
+        {
+            // Return false if procedure fails (e.g., user not banned)
+            return false;
+        }
+    }
 }

@@ -322,4 +322,48 @@ public class PollService : IPollService
             _ => throw new InvalidOperationException($"Unknown algorithm: {algorithm}")
         };
     }
+
+    public async Task<bool> BanUserAsync(Guid pollId, Guid ownerUserId, Guid targetUserId)
+    {
+        if (pollId == Guid.Empty)
+            throw new ArgumentException("Poll ID cannot be empty", nameof(pollId));
+
+        if (ownerUserId == Guid.Empty)
+            throw new ArgumentException("Owner user ID cannot be empty", nameof(ownerUserId));
+
+        if (targetUserId == Guid.Empty)
+            throw new ArgumentException("Target user ID cannot be empty", nameof(targetUserId));
+
+        // Verify poll exists and that the owner is the current user
+        var poll = await GetPollByIdAsync(pollId);
+        if (poll == null)
+            throw new ArgumentException("Poll not found", nameof(pollId));
+
+        if (poll.OwnerUserId != ownerUserId)
+            throw new UnauthorizedAccessException("Only the poll owner can ban users");
+
+        return await _pollDataAccessService.BanUserAsync(pollId, targetUserId);
+    }
+
+    public async Task<bool> UnbanUserAsync(Guid pollId, Guid ownerUserId, Guid targetUserId)
+    {
+        if (pollId == Guid.Empty)
+            throw new ArgumentException("Poll ID cannot be empty", nameof(pollId));
+
+        if (ownerUserId == Guid.Empty)
+            throw new ArgumentException("Owner user ID cannot be empty", nameof(ownerUserId));
+
+        if (targetUserId == Guid.Empty)
+            throw new ArgumentException("Target user ID cannot be empty", nameof(targetUserId));
+
+        // Verify poll exists and that the owner is the current user
+        var poll = await GetPollByIdAsync(pollId);
+        if (poll == null)
+            throw new ArgumentException("Poll not found", nameof(pollId));
+
+        if (poll.OwnerUserId != ownerUserId)
+            throw new UnauthorizedAccessException("Only the poll owner can unban users");
+
+        return await _pollDataAccessService.UnbanUserAsync(pollId, targetUserId);
+    }
 }
