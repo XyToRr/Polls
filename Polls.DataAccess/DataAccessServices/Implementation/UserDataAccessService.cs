@@ -88,4 +88,50 @@ public class UserDataAccessService : DataAccessService<User>
             return null;
         }
     }
+
+    public async Task<bool> AddUserFollowAsync(Guid currentUserId, Guid targetUserId)
+    {
+        // Verify both users exist
+        var currentUser = await GetByIdAsync(currentUserId);
+        if (currentUser == null)
+            return false;
+
+        var targetUser = await GetByIdAsync(targetUserId);
+        if (targetUser == null)
+            return false;
+
+        // Check if follow relationship already exists
+        var parameters = new DynamicParameters();
+        parameters.Add("@CurrentUserId", currentUserId);
+        parameters.Add("@TargetUserId", targetUserId);
+
+        try
+        {
+            var rowsAffected = await ExecuteNonQueryProcedureAsync("dbo.FollowUser", parameters);
+            return rowsAffected > 0;
+        }
+        catch
+        {
+            // Return false if procedure fails (e.g., follow relationship already exists)
+            return false;
+        }
+    }
+
+    public async Task<bool> RemoveUserFollowAsync(Guid currentUserId, Guid targetUserId)
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("@CurrentUserId", currentUserId);
+        parameters.Add("@TargetUserId", targetUserId);
+
+        try
+        {
+            var rowsAffected = await ExecuteNonQueryProcedureAsync("dbo.UnfollowUser", parameters);
+            return rowsAffected > 0;
+        }
+        catch
+        {
+            // Return false if procedure fails (e.g., follow relationship doesn't exist)
+            return false;
+        }
+    }
 }

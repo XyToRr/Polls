@@ -32,4 +32,29 @@ public class UserService : IUserService
 
         return await _userDataAccess.CreateAsync(user);
     }
+
+    public async Task<bool> AddFollowAsync(Guid currentUserId, Guid targetUserId)
+    {
+        if (currentUserId == Guid.Empty)
+            throw new ArgumentException("Current user ID cannot be empty", nameof(currentUserId));
+
+        if (targetUserId == Guid.Empty)
+            throw new ArgumentException("Target user ID cannot be empty", nameof(targetUserId));
+
+        if (currentUserId == targetUserId)
+            return false;
+
+        return await _userDataAccess.AddUserFollowAsync(currentUserId, targetUserId);
+    }
+
+    public async Task<bool> RemoveFollowAsync(Guid currentUserId, Guid targetUserId)
+    {
+        if (currentUserId == Guid.Empty)
+            throw new ArgumentException("Current user ID cannot be empty", nameof(currentUserId));
+
+        if (targetUserId == Guid.Empty)
+            throw new ArgumentException("Target user ID cannot be empty", nameof(targetUserId));
+
+        return await _userDataAccess.RemoveUserFollowAsync(currentUserId, targetUserId);
+    }
 }
